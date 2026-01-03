@@ -1,0 +1,37 @@
+A. The name of all boats that are used in some trip
++-----------+
+|boat_name  |
++-----------+
+|Atlantico  |
+|Aurora     |
+|Bremen Star|
++-----------+
+
+
+B. The name of all boats that are not used in any trip.
++---------+
+|boat_name|
++---------+
+|Lusitano |
+|Saimaa   |
+|Oderwind |
++---------+
+
+
+C. The name of all boats registered in 'PRT' (ISO code) for which at least one responsible for a
+reservation has a surname that ends with 'Santos'.
+
+
++---------+
+|boat_name|
++---------+
+|Atlantico|
++---------+
+
+D. The full name of all skippers without any certificate corresponding to the class of the trip’s boat.
++----------+-------+
+|first_name|surname|
++----------+-------+
+|Santeri   |Kokonen|
++----------+-------+
+
