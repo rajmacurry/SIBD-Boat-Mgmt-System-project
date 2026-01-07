@@ -53,7 +53,7 @@ CREATE OR REPLACE FUNCTION disjoint_junior_check()
        END;
        $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER tg_disjoint_junior_check
+CREATE  TRIGGER tg_disjoint_junior_check
 BEFORE INSERT OR UPDATE OF email on junior
 FOR EACH ROW EXECUTE PROCEDURE disjoint_junior_check();
 
@@ -69,7 +69,7 @@ CREATE OR REPLACE FUNCTION disjoint_senior_check()
     $$ LANGUAGE plpgsql;
 
 
-CREATE TRIGGER tg_disjoint_senior_check
+CREATE  TRIGGER tg_disjoint_senior_check
 BEFORE INSERT OR UPDATE OF email ON senior
 FOR EACH ROW EXECUTE PROCEDURE disjoint_senior_check();
 

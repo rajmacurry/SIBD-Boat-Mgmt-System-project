@@ -14,11 +14,12 @@ email = form.getvalue('email')
 connection = None
 try:
     connection = psycopg2.connect(login.credentials)
+    connection.autocommit = False
     cursor = connection.cursor()
     
-    cursor.execute("DELETE FROM junior WHERE email = %s;", (email,))
-    cursor.execute("DELETE FROM senior WHERE email = %s;", (email,))
-    cursor.execute("DELETE FROM sailor WHERE email = %s;", (email,))
+    cursor.execute("DELETE FROM junior WHERE email = %(email)s;", {'email': email})
+    cursor.execute("DELETE FROM senior WHERE email = %(email)s;", {'email': email})
+    cursor.execute("DELETE FROM sailor WHERE email = %(email)s;", {'email': email})
     
     connection.commit()
     print("""
@@ -29,7 +30,7 @@ try:
     </div>
     """.format(email))
     
-except Exception as e:
+except (Exception, psycopg2.DatabaseError) as e:
     if connection:
         connection.rollback()
     print("""

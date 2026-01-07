@@ -20,6 +20,7 @@ skipper = form.getvalue('skipper')
 connection = None
 try:
     connection = psycopg2.connect(login.credentials)
+    connection.autocommit = False
     cursor = connection.cursor()
     
     # Parse Reservation Key
@@ -37,11 +38,14 @@ try:
     INSERT INTO trip 
     (takeoff, arrival, insurance, from_latitude, from_longitude, to_latitude, to_longitude, 
      skipper, reservation_start_date, reservation_end_date, boat_country, cni)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    VALUES (%(takeoff)s, %(arrival)s, %(insurance)s, %(from_lat)s, %(from_lon)s, %(to_lat)s, %(to_lon)s, 
+     %(skipper)s, %(res_start)s, %(res_end)s, %(res_country)s, %(res_cni)s)
     """
     
-    cursor.execute(sql, (takeoff, arrival, insurance, from_lat, from_lon, to_lat, to_lon, 
-                         skipper, res_start_date, res_end_date, res_country, res_cni))
+    cursor.execute(sql, {'takeoff': takeoff, 'arrival': arrival, 'insurance': insurance, 
+                         'from_lat': from_lat, 'from_lon': from_lon, 'to_lat': to_lat, 'to_lon': to_lon, 
+                         'skipper': skipper, 'res_start': res_start_date, 'res_end': res_end_date, 
+                         'res_country': res_country, 'res_cni': res_cni})
     
     connection.commit()
     print("""
@@ -53,7 +57,7 @@ try:
     </div>
     """.format(skipper))
 
-except Exception as e:
+except (Exception, psycopg2.DatabaseError) as e:
     if connection:
         connection.rollback()
     

@@ -17,21 +17,27 @@ sailor_type = form.getvalue('type')
 connection = None
 try:
     connection = psycopg2.connect(login.credentials)
+    connection.autocommit = False
     cursor = connection.cursor()
     
-    # 1. Insert into sailor
-    sql_sailor = "INSERT INTO sailor (firstname, surname, email) VALUES (%s, %s, %s);"
-    cursor.execute(sql_sailor, (firstname, surname, email))
+    # Defer constraints to ensure mandatory specialization check waits until both inserts are done
+    cursor.execute("SET CONSTRAINTS ALL DEFERRED;")
     
-    # 2. Insert into specialization
+# 2. Insert into specialization
     if sailor_type == 'junior':
-        sql_spec = "INSERT INTO junior (email) VALUES (%s);"
+        sql_spec = "INSERT INTO junior (email) VALUES (%(email)s);"
     elif sailor_type == 'senior':
-        sql_spec = "INSERT INTO senior (email) VALUES (%s);"
+        sql_spec = "INSERT INTO senior (email) VALUES (%(email)s);"
     else:
         raise Exception("Invalid sailor type")
+
+    # 1. Insert into sailor
+    sql_sailor = "INSERT INTO sailor (firstname, surname, email) VALUES (%(firstname)s, %(surname)s, %(email)s);"
+    cursor.execute(sql_sailor, {'firstname': firstname, 'surname': surname, 'email': email})
+    
+    
         
-    cursor.execute(sql_spec, (email,))
+    cursor.execute(sql_spec, {'email': email})
     
     connection.commit()
     
@@ -45,7 +51,7 @@ try:
     """.format(firstname, surname))
     
     cursor.close()
-except Exception as e:
+except (Exception, psycopg2.DatabaseError) as e:
     if connection:
         connection.rollback()
     

@@ -58,6 +58,28 @@ print("""
                 </select>
                 <div class="form-text">Only Senior sailors can be responsible for a reservation.</div>
             </div>
+""")
+
+            <div class="col-12 mt-4">
+                <label class="form-label">Authorise New Sailor</label>
+                <div class="form-text mb-2">Grant access to this reservation. Hold Ctrl/Cmd to select multiple.</div>
+                <select name="authorized_sailors" multiple class="form-select" size="10">
+                    <option value="" disabled>Select Sailors...</option>
+"""
+try:
+    conn = psycopg2.connect(login.credentials)
+    cur = conn.cursor()
+    cur.execute("SELECT email, firstname, surname FROM sailor ORDER BY firstname")
+    for row in cur.fetchall():
+        print('<option value="{}">{} {} ({})</option>'.format(row[0], row[1], row[2], row[0]))
+    cur.close()
+    conn.close()
+except:
+    print('<option>Error loading sailors</option>')
+
+print("""
+                </select>
+            </div>
             
             <div class="col-12 mt-4">
                 <button type="submit" class="btn btn-primary w-100">Make Reservation</button>
@@ -91,7 +113,8 @@ try:
         print('<tr>')
         print('<td>{}</td>'.format(row[0]))
         print('<td>{}</td>'.format(row[1]))
-        print('<td><div><strong>{}</strong></div><small class="text-muted">{}</small></td>'.format(row[2], row[3]))
+        # Make the boat clickable to view details/authorisations
+        print('<td><a href="authorise.cgi?{}" class="text-decoration-none"><div><strong>{}</strong></div><small class="text-muted">{}</small></a></td>'.format(params, row[2], row[3]))
         print('<td><small>{}</small></td>'.format(row[4]))
         print('<td>')
         print('<div class="btn-group" role="group">')
