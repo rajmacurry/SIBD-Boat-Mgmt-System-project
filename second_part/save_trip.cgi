@@ -61,17 +61,24 @@ except (Exception, psycopg2.DatabaseError) as e:
     if connection:
         connection.rollback()
     
+    error_message = str(e)
+    display_message = "<p><code>{}</code></p>".format(e)
+    
+    # Check for specific trip_check constraint violation
+    if "trip_check" in error_message:
+        display_message = '<p class="text-danger font-weight-bold">The sailor who is skipping is not authorised.</p>'
+    
     print("""
     <div class="alert alert-danger">
         <h4>Registration Failed</h4>
         <p>There was an error logging this trip:</p>
-        <p><code>{}</code></p>
+        {}
         <hr>
         <p class="mb-0">Please check that the Skipper email is valid, authorised, and that the dates align with the reservation.</p>
         <br>
         <a href="trips.cgi" class="btn btn-secondary">Go Back</a>
     </div>
-    """.format(e))
+    """.format(display_message))
 
 finally:
     if connection:

@@ -101,17 +101,18 @@ try:
     
     # List trips
     print('<h4 class="mb-3">Trip Logbook</h4>')
-    cursor.execute("SELECT takeoff, arrival, boat_country, cni, skipper FROM trip ORDER BY takeoff DESC")
+    cursor.execute("SELECT takeoff, arrival, boat_country, cni, skipper, reservation_start_date, reservation_end_date FROM trip ORDER BY takeoff DESC")
     
     print('<div class="table-responsive">')
     print('<table class="table table-striped table-hover align-middle">')
-    print('<thead class="table-dark"><tr><th>Takeoff</th><th>Arrival</th><th>Boat</th><th>Skipper</th></tr></thead><tbody>')
+    print('<thead class="table-dark"><tr><th>Takeoff</th><th>Arrival</th><th>Boat</th><th>Reservation</th><th>Skipper</th></tr></thead><tbody>')
     
     for row in cursor.fetchall():
         print('<tr>')
         print('<td>{}</td>'.format(row[0]))
         print('<td>{}</td>'.format(row[1]))
         print('<td><strong>{}</strong> <small class="text-muted">({})</small></td>'.format(row[2], row[3]))
+        print('<td><small>{} to {}</small></td>'.format(row[5], row[6]))
         print('<td><code>{}</code></td>'.format(row[4]))
         print('</tr>')
     print('</tbody></table></div>')

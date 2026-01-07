@@ -44,8 +44,10 @@ def normalize_files():
             # Write back
             if modified or "\r\n" in content:
                 print(f"  [LineEnd] Normalizing {file_path}")
+                # Ensure we use the version with LF only
+                final_content = "".join(lines).replace("\r\n", "\n")
                 with open(file_path, 'w', encoding='utf-8', newline='\n') as f:
-                    f.writelines(lines)
+                    f.write(final_content)
                     
         except Exception as e:
             print(f"  [Error] {file_path}: {e}")
