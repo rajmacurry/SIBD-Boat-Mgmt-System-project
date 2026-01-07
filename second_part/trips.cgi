@@ -2,20 +2,38 @@
 import psycopg2
 import login
 import cgi
+import templates
+import cgitb
+cgitb.enable()
 
-print('Content-type:text/html\n\n')
-print('<html><head><title>Manage Trips</title></head><body>')
-print('<h1>Manage Trips</h1>')
-print('<a href="index.cgi">Back to Menu</a>')
+templates.print_header("Manage Trips")
+
+print("""
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Manage Trips</h2>
+    <a href="index.cgi" class="btn btn-secondary">← Back to Menu</a>
+</div>
+""")
 
 # Form to add trip
-print('<h2>Register New Trip</h2>')
-print('<form action="save_trip.cgi" method="post">')
-print('<p>Takeoff Date: <input type="date" name="takeoff" required/></p>')
-print('<p>Arrival Date: <input type="date" name="arrival" required/></p>')
-print('<p>Insurance: <input type="text" name="insurance" required/></p>')
-# Origin
-print('<p>From Location (Lat,Lon): <select name="from_loc">')
+print("""
+<div class="card mb-5">
+    <div class="card-body">
+        <h4 class="card-title mb-4">Log New Trip</h4>
+        <form action="save_trip.cgi" method="post" class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Takeoff Date</label>
+                <input type="date" name="takeoff" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Arrival Date</label>
+                <input type="date" name="arrival" class="form-control" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label class="form-label">From Location</label>
+                <select name="from_loc" class="form-select">
+""")
 # Dropdown locations
 connection = None
 try:
@@ -24,49 +42,83 @@ try:
     cursor.execute("SELECT name, latitude, longitude FROM location ORDER BY name")
     locations = cursor.fetchall()
     for loc in locations:
-        val = f"{loc[1]},{loc[2]}"
-        print(f'<option value="{val}">{loc[0]}</option>')
-    # Reuse for To Location
-    print('</select></p>')
-    print('<p>To Location (Lat,Lon): <select name="to_loc">')
+        val = "{},{}".format(loc[1], loc[2])
+        print('<option value="{}">{}</option>'.format(val, loc[0]))
+    
+    print("""
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">To Location</label>
+                <select name="to_loc" class="form-select">
+    """)
     for loc in locations:
-        val = f"{loc[1]},{loc[2]}"
-        print(f'<option value="{val}">{loc[0]}</option>')
-    print('</select></p>')
+        val = "{},{}".format(loc[1], loc[2])
+        print('<option value="{}">{}</option>'.format(val, loc[0]))
     
-    # Skipper validation? Should be authorised sailor. 
-    # Ideally AJAX or reloading based on reservation, but for simple prototype, just list all sailors or list reservations first.
-    # To register a trip, we need to know WHICH reservation it belongs to.
-    # So we should pick a reservation first.
+    print("""
+                </select>
+            </div>
+    """)
     
-    print('<p>Reservation (Boat/Date): <select name="reservation_key">')
+    print("""
+            <div class="col-md-12">
+                <label class="form-label">Reservation (Boat & Date Slot)</label>
+                <select name="reservation_key" class="form-select">
+    """)
+    
     cursor.execute("SELECT start_date, end_date, country, cni FROM reservation ORDER BY start_date DESC")
     reservations = cursor.fetchall()
     
     for res in reservations:
         # Key: start|end|country|cni
-        val = f"{res[0]}|{res[1]}|{res[2]}|{res[3]}"
-        label = f"{res[2]} - {res[3]} ({res[0]} to {res[1]})"
-        print(f'<option value="{val}">{label}</option>')
-    print('</select></p>')
+        val = "{}|{}|{}|{}".format(res[0], res[1], res[2], res[3])
+        label = "{} - {} (Date: {} to {})".format(res[2], res[3], res[0], res[1])
+        print('<option value="{}">{}</option>'.format(val, label))
     
-    print('<p>Skipper Email: <input type="text" name="skipper" placeholder="Must be authorised" required/></p>')
-    
-    print('<input type="submit" value="Register Trip">')
-    print('</form>')
+    print("""
+                </select>
+                <div class="form-text">Choose the approved reservation for this trip.</div>
+            </div>
+            
+            <div class="col-md-8">
+                <label class="form-label">Skipper Email</label>
+                <input type="text" name="skipper" class="form-control" placeholder="Must be an authorised sailor" required>
+            </div>
+            
+             <div class="col-md-4">
+                <label class="form-label">Insurance ID</label>
+                <input type="text" name="insurance" class="form-control" required>
+            </div>
+
+            <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-primary w-100">Log Trip</button>
+            </div>
+        </form>
+    </div>
+</div>
+    """)
     
     # List trips
-    print('<h2>Existing Trips</h2>')
+    print('<h4 class="mb-3">Trip Logbook</h4>')
     cursor.execute("SELECT takeoff, arrival, boat_country, cni, skipper FROM trip ORDER BY takeoff DESC")
-    print('<table border="1">')
-    print('<tr><th>Takeoff</th><th>Arrival</th><th>Boat</th><th>Skipper</th></tr>')
+    
+    print('<div class="table-responsive">')
+    print('<table class="table table-striped table-hover align-middle">')
+    print('<thead class="table-dark"><tr><th>Takeoff</th><th>Arrival</th><th>Boat</th><th>Skipper</th></tr></thead><tbody>')
+    
     for row in cursor.fetchall():
-        print(f'<tr><td>{row[0]}</td><td>{row[1]}</td><td>{row[2]} {row[3]}</td><td>{row[4]}</td></tr>')
-    print('</table>')
+        print('<tr>')
+        print('<td>{}</td>'.format(row[0]))
+        print('<td>{}</td>'.format(row[1]))
+        print('<td><strong>{}</strong> <small class="text-muted">({})</small></td>'.format(row[2], row[3]))
+        print('<td><code>{}</code></td>'.format(row[4]))
+        print('</tr>')
+    print('</tbody></table></div>')
     
     cursor.close()
     connection.close()
 except Exception as e:
-    print(f'<p>Error loading data: {e}</p>')
+    print('<div class="alert alert-danger">Error loading data: {}</div>'.format(e))
 
-print('</body></html>')
+templates.print_footer()

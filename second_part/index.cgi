@@ -1,19 +1,40 @@
 #!/usr/bin/python3
-import cgi
+import templates
+import cgitb
+cgitb.enable()
 
-print('Content-type:text/html\n\n')
-print('<html>')
-print('<head>')
-print('<title>Sailing Project Application</title>')
-print('</head>')
-print('<body>')
-print('<h1>Sailing Project - Part 5</h1>')
-print('<h2>Main Menu</h2>')
-print('<ul>')
-print('<li><a href="sailors.cgi">Manage Sailors</a></li>')
-print('<li><a href="reservations.cgi">Manage Reservations</a></li>')
-print('<li><a href="trips.cgi">Manage Trips</a></li>')
-# print('<li><a href="authorise.cgi">Manage Authorizations</a></li>')
-print('</ul>')
-print('</body>')
-print('</html>')
+templates.print_header("Sailing Project - Main Menu")
+
+print("""
+<div class="text-center mb-5">
+    <h1 class="display-4 text-primary fw-bold">⚓ Sailing Manager</h1>
+    <p class="lead text-muted">Manage your fleet, crew, and adventures</p>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-md-4">
+        <a href="sailors.cgi" class="menu-link">
+            <div class="mb-2">👨‍✈️</div>
+            Manage Sailors
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="reservations.cgi" class="menu-link">
+            <div class="mb-2">📅</div>
+            Manage Reservations
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="trips.cgi" class="menu-link">
+             <div class="mb-2">⛵</div>
+            Manage Trips
+        </a>
+    </div>
+</div>
+
+<div class="text-center mt-5">
+    <small class="text-muted">SIBD Project Part 2</small>
+</div>
+""")
+
+templates.print_footer()

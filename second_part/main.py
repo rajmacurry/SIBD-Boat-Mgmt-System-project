@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from db import Database
 
 def print_header(title):

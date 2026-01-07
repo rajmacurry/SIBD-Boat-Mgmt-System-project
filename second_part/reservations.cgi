@@ -1,39 +1,74 @@
 #!/usr/bin/python3
 import psycopg2
 import login
+import templates
+import cgitb
+cgitb.enable()
 
-print('Content-type:text/html\n\n')
-print('<html>')
-print('<head><title>Manage Reservations</title></head>')
-print('<body>')
-print('<h1>Manage Reservations</h1>')
-print('<a href="index.cgi">Back to Menu</a>')
+templates.print_header("Manage Reservations")
+
+print("""
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Manage Reservations</h2>
+    <a href="index.cgi" class="btn btn-secondary">← Back to Menu</a>
+</div>
+""")
 
 # Form to create new reservation
-print('<h2>Create Reservation</h2>')
-print('<form action="save_reservation.cgi" method="post">')
-print('<p>Start Date (YYYY-MM-DD): <input type="date" name="start_date" required/></p>')
-print('<p>End Date (YYYY-MM-DD): <input type="date" name="end_date" required/></p>')
-print('<p>Country: <input type="text" name="country" required/></p>')
-print('<p>CNI: <input type="text" name="cni" required/></p>')
-print('<p>Responsible Senior Email: <select name="responsible">')
-# Dropdown for Seniors
+print("""
+<div class="card mb-5">
+    <div class="card-body">
+        <h4 class="card-title mb-4">Book a Boat</h4>
+        <form action="save_reservation.cgi" method="post" class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Start Date</label>
+                <input type="date" name="start_date" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">End Date</label>
+                <input type="date" name="end_date" class="form-control" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label class="form-label">Boat Country</label>
+                <input type="text" name="country" class="form-control" placeholder="e.g. PRT" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Boat CNI</label>
+                <input type="text" name="cni" class="form-control" placeholder="Boat Identifier" required>
+            </div>
+            
+            <div class="col-md-12">
+                <label class="form-label">Responsible Senior</label>
+                <select name="responsible" class="form-select">
+""")
+
 try:
     conn = psycopg2.connect(login.credentials)
     cur = conn.cursor()
     cur.execute("SELECT s.email, s.firstname, s.surname FROM senior sn JOIN sailor s ON sn.email = s.email;")
     for row in cur.fetchall():
-        print(f'<option value="{row[0]}">{row[1]} {row[2]} ({row[0]})</option>')
+        print('<option value="{}">{} {} ({})</option>'.format(row[0], row[1], row[2], row[0]))
     cur.close()
     conn.close()
 except:
-    print('<option>Error loading seniors</option>')
-print('</select></p>')
-print('<p><input type="submit" value="Create Reservation"/></p>')
-print('</form>')
+    print('<option>Error loading seniors - Check DB Connection</option>')
+
+print("""
+                </select>
+                <div class="form-text">Only Senior sailors can be responsible for a reservation.</div>
+            </div>
+            
+            <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-primary w-100">Make Reservation</button>
+            </div>
+        </form>
+    </div>
+</div>
+""")
 
 # List existing reservations
-print('<h2>Existing Reservations</h2>')
+print('<h4 class="mb-3">Current Reservations</h4>')
 try:
     conn = psycopg2.connect(login.credentials)
     cur = conn.cursor()
@@ -45,27 +80,31 @@ try:
     cur.execute(sql)
     results = cur.fetchall()
     
-    print('<table border="1" cellpadding="5">')
-    print('<tr><th>Start</th><th>End</th><th>Country</th><th>CNI</th><th>Responsible</th><th>Actions</th></tr>')
+    print('<div class="table-responsive">')
+    print('<table class="table table-striped table-hover align-middle">')
+    print('<thead class="table-dark"><tr><th>Start</th><th>End</th><th>Boat</th><th>Responsible</th><th>Actions</th></tr></thead>')
+    print('<tbody>')
+    
     for row in results:
         # Construct composite key for deletion
-        # Passing multiple params
-        params = f"start_date={row[0]}&end_date={row[1]}&country={row[2]}&cni={row[3]}"
+        params = "start_date={}&end_date={}&country={}&cni={}".format(row[0], row[1], row[2], row[3])
         print('<tr>')
-        print(f'<td>{row[0]}</td>')
-        print(f'<td>{row[1]}</td>')
-        print(f'<td>{row[2]}</td>')
-        print(f'<td>{row[3]}</td>')
-        print(f'<td>{row[4]}</td>')
-        print(f'<td>')
-        print(f'<a href="remove_reservation.cgi?{params}" onclick="return confirm(\'Delete reservation?\');">Remove</a> | ')
-        print(f'<a href="authorise.cgi?{params}">Manage Auth</a>')
+        print('<td>{}</td>'.format(row[0]))
+        print('<td>{}</td>'.format(row[1]))
+        print('<td><div><strong>{}</strong></div><small class="text-muted">{}</small></td>'.format(row[2], row[3]))
+        print('<td><small>{}</small></td>'.format(row[4]))
+        print('<td>')
+        print('<div class="btn-group" role="group">')
+        print('<a href="authorise.cgi?{}" class="btn btn-sm btn-outline-primary">Auths</a>'.format(params))
+        print('<a href="remove_reservation.cgi?{}" onclick="return confirm(\'Delete reservation?\');" class="btn btn-sm btn-outline-danger">Delete</a>'.format(params))
+        print('</div>')
         print('</td>')
         print('</tr>')
-    print('</table>')
+    print('</tbody></table></div>')
+    
     cur.close()
     conn.close()
 except Exception as e:
-    print(f'<p>Error: {e}</p>')
+    print('<div class="alert alert-danger">Error: {}</div>'.format(e))
 
-print('</body></html>')
+templates.print_footer()

@@ -2,9 +2,11 @@
 import psycopg2
 import cgi
 import login
+import templates
+import cgitb
+cgitb.enable()
 
-print('Content-type:text/html\n\n')
-print('<html><body>')
+templates.print_header("Reservation Created")
 
 form = cgi.FieldStorage()
 start_date = form.getvalue('start_date')
@@ -33,15 +35,31 @@ try:
     cursor.execute(sql, (start_date, end_date, country, cni, responsible))
     
     connection.commit()
-    print('<h3>Reservation created successfully!</h3>')
+    print("""
+    <div class="alert alert-success text-center">
+        <h4>Reservation Confirmed!</h4>
+        <p>The boat is booked from <strong>{}</strong> to <strong>{}</strong>.</p>
+        <p>Responsible: <code>{}</code></p>
+        <a href="reservations.cgi" class="btn btn-primary">Back to Reservations</a>
+    </div>
+    """.format(start_date, end_date, responsible))
+
 except Exception as e:
     if connection:
         connection.rollback()
-    print('<h3>Error creating reservation</h3>')
-    print(f'<p>{e}</p>')
+    
+    print("""
+    <div class="alert alert-danger">
+        <h4>Booking Failed</h4>
+        <p>Could not create reservation. Details:</p>
+        <p><code>{}</code></p>
+        <hr>
+        <a href="reservations.cgi" class="btn btn-secondary">Try Again</a>
+    </div>
+    """.format(e))
+
 finally:
     if connection:
         connection.close()
 
-print('<p><a href="reservations.cgi">Go back</a></p>')
-print('</body></html>')
+templates.print_footer()

@@ -2,10 +2,11 @@
 import psycopg2
 import cgi
 import login
+import templates
+import cgitb
+cgitb.enable()
 
-print('Content-type:text/html\n\n')
-print('<html>')
-print('<body>')
+templates.print_header("Sailor Registration")
 
 form = cgi.FieldStorage()
 firstname = form.getvalue('firstname')
@@ -22,7 +23,7 @@ try:
     sql_sailor = "INSERT INTO sailor (firstname, surname, email) VALUES (%s, %s, %s);"
     cursor.execute(sql_sailor, (firstname, surname, email))
     
-    # 2. Insert into specialization (junior or senior)
+    # 2. Insert into specialization
     if sailor_type == 'junior':
         sql_spec = "INSERT INTO junior (email) VALUES (%s);"
     elif sailor_type == 'senior':
@@ -33,19 +34,33 @@ try:
     cursor.execute(sql_spec, (email,))
     
     connection.commit()
-    print('<h3>Sailor registered successfully!</h3>')
-    print('<p><a href="sailors.cgi">Go back</a></p>')
+    
+    print("""
+    <div class="alert alert-success text-center" role="alert">
+        <h4 class="alert-heading">Success!</h4>
+        <p>Sailor <strong>{} {}</strong> registered successfully.</p>
+        <hr>
+        <p class="mb-0"><a href="sailors.cgi" class="btn btn-primary">Return to Sailors List</a></p>
+    </div>
+    """.format(firstname, surname))
     
     cursor.close()
 except Exception as e:
     if connection:
         connection.rollback()
-    print('<h3>Error registering sailor</h3>')
-    print(f'<p>{e}</p>')
-    print('<p><a href="sailors.cgi">Go back</a></p>')
+    
+    print("""
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Registration Failed</h4>
+        <p>Could not register sailor. Determining the cause:</p>
+        <p><code>{}</code></p>
+        <hr>
+        <p class="mb-0"><a href="sailors.cgi" class="btn btn-secondary">Try Again</a></p>
+    </div>
+    """.format(e))
+    
 finally:
     if connection:
         connection.close()
 
-print('</body>')
-print('</html>')
+templates.print_footer()

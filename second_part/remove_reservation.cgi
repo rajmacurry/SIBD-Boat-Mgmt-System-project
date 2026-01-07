@@ -2,9 +2,11 @@
 import psycopg2
 import cgi
 import login
+import templates
+import cgitb
+cgitb.enable()
 
-print('Content-type:text/html\n\n')
-print('<html><body>')
+templates.print_header("Reservation Removal")
 
 form = cgi.FieldStorage()
 start_date = form.getvalue('start_date')
@@ -17,14 +19,7 @@ try:
     connection = psycopg2.connect(login.credentials)
     cursor = connection.cursor()
     
-    # Delete reservation
-    # Constraint IC-6 might make this fail if there are trips?
-    # Schema says: authorised weak entity on reservation?
-    # Schema: `authorised` references `reservation`.
-    # So we probably need to delete from `authorised` first. 
-    # And `trip` references `reservation`.
-    
-    # Naive delete from dependents first if not cascading:
+    # Delete dependent data first
     cursor.execute("DELETE FROM authorised WHERE start_date=%s AND end_date=%s AND boat_country=%s AND cni=%s", 
                    (start_date, end_date, country, cni))
                    
@@ -36,15 +31,28 @@ try:
                    (start_date, end_date, country, cni))
     
     connection.commit()
-    print('<h3>Reservation removed successfully!</h3>')
+    print("""
+    <div class="alert alert-success text-center">
+        <h4>Reservation Deleted</h4>
+        <p>The booking and all associated authorisations/trips have been removed.</p>
+        <a href="reservations.cgi" class="btn btn-outline-success">Return to List</a>
+    </div>
+    """)
+    
 except Exception as e:
     if connection:
         connection.rollback()
-    print('<h3>Error removing reservation</h3>')
-    print(f'<p>{e}</p>')
+    
+    print("""
+    <div class="alert alert-danger">
+        <h4>Deletion Failed</h4>
+        <p>Error: {}</p>
+        <a href="reservations.cgi" class="btn btn-secondary">Back</a>
+    </div>
+    """.format(e))
+
 finally:
     if connection:
         connection.close()
 
-print('<p><a href="reservations.cgi">Go back</a></p>')
-print('</body></html>')
+templates.print_footer()

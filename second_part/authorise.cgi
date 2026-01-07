@@ -2,9 +2,11 @@
 import psycopg2
 import cgi
 import login
+import templates
+import cgitb
+cgitb.enable()
 
-print('Content-type:text/html\n\n')
-print('<html><head><title>Manage Authorizations</title></head><body>')
+templates.print_header("Manage Authorizations")
 
 form = cgi.FieldStorage()
 start_date = form.getvalue('start_date')
@@ -13,15 +15,19 @@ country = form.getvalue('country')
 cni = form.getvalue('cni')
 
 # Helper to keep params passing
-params = f"start_date={start_date}&end_date={end_date}&country={country}&cni={cni}"
+params = "start_date={}&end_date={}&country={}&cni={}".format(start_date, end_date, country, cni)
 
-print(f'<h1>Authorizations for Reservation</h1>')
-print(f'<p><b>Reservation:</b> {country} / {cni} ({start_date} to {end_date})</p>')
-print(f'<a href="reservations.cgi">Back to Reservations</a>')
+print("""
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Reservation Authorizations</h2>
+    <a href="reservations.cgi" class="btn btn-secondary">← Back to Reservations</a>
+</div>
 
-# Handle Add/Remove POST actions within this script for simplicity, or simpler: show form and utilize separate action script
-# But to show the list, we need this page.
-# Let's check if we have an action
+<div class="alert alert-info">
+    <strong>Reservation Context:</strong> Boat <code>{} - {}</code> from <strong>{}</strong> to <strong>{}</strong>
+</div>
+""".format(country, cni, start_date, end_date))
+
 action = form.getvalue('action')
 target_sailor = form.getvalue('sailor')
 
@@ -37,10 +43,10 @@ try:
                 VALUES (%s, %s, %s, %s, %s)
             """, (start_date, end_date, country, cni, target_sailor))
             connection.commit()
-            print('<p style="color:green">Sailor authorised!</p>')
+            print('<div class="alert alert-success alert-dismissible fade show">Sailor authorised successfully!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>')
         except Exception as e:
             connection.rollback()
-            print(f'<p style="color:red">Error authorising: {e}</p>')
+            print('<div class="alert alert-danger alert-dismissible fade show">Error authorising: {}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>'.format(e))
 
     elif action == 'remove' and target_sailor:
         try:
@@ -49,13 +55,18 @@ try:
                 WHERE start_date=%s AND end_date=%s AND boat_country=%s AND cni=%s AND sailor=%s
             """, (start_date, end_date, country, cni, target_sailor))
             connection.commit()
-            print('<p style="color:green">Sailor de-authorised!</p>')
+            print('<div class="alert alert-warning alert-dismissible fade show">Sailor authorization revoked.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>')
         except Exception as e:
             connection.rollback()
-            print(f'<p style="color:red">Error de-authorising: {e}</p>')
+            print('<div class="alert alert-danger alert-dismissible fade show">Error de-authorising: {}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>'.format(e))
 
-    # 1. List currently authorised sailors
-    print('<h3>Authorised Sailors</h3>')
+    # 1. Dashboard Layout
+    print('<div class="row g-4"><div class="col-md-7">')
+
+    # LEFT COL: List
+    print('<div class="card h-100"><div class="card-body">')
+    print('<h4 class="card-title">Authorised Crew</h4>')
+    
     cursor.execute("""
         SELECT s.firstname, s.surname, s.email 
         FROM authorised a
@@ -63,37 +74,55 @@ try:
         WHERE a.start_date=%s AND a.end_date=%s AND a.boat_country=%s AND a.cni=%s
     """, (start_date, end_date, country, cni))
     
-    print('<ul>')
-    for row in cursor.fetchall():
-        print(f'<li>{row[0]} {row[1]} ({row[2]}) '
-              f'[<a href="authorise.cgi?{params}&action=remove&sailor={row[2]}">Revoke</a>]</li>')
+    print('<ul class="list-group list-group-flush mt-3">')
+    results = cursor.fetchall()
+    if not results:
+        print('<li class="list-group-item text-muted">No sailors authorised yet.</li>')
+    
+    for row in results:
+        print("""
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <strong>{} {}</strong>
+                <br><small class="text-muted">{}</small>
+            </div>
+            <a href="authorise.cgi?{}&action=remove&sailor={}" class="btn btn-sm btn-outline-danger">Revoke</a>
+        </li>
+        """.format(row[0], row[1], row[2], params, row[2]))
     print('</ul>')
+    print('</div></div></div>') # End col, card, body
 
-    # 2. Form to add new sailor
-    print('<h3>Authorise New Sailor</h3>')
-    # Get all sailors NOT authorised needed? Or just all sailors?
-    # Just a simple dropdown of all sailors is easier for prototype.
+    # RIGHT COL: Add Form
+    print('<div class="col-md-5">')
+    print('<div class="card h-100"><div class="card-body bg-light">')
+    print('<h4 class="card-title">Authorise New Sailor</h4>')
+    print('<p class="card-text text-muted">Grant access to this reservation.</p>')
+    
+    print('<form action="authorise.cgi" method="get">') 
+    # Hidden Inputs
+    print('<input type="hidden" name="start_date" value="{}">'.format(start_date))
+    print('<input type="hidden" name="end_date" value="{}">'.format(end_date))
+    print('<input type="hidden" name="country" value="{}">'.format(country))
+    print('<input type="hidden" name="cni" value="{}">'.format(cni))
+    print('<input type="hidden" name="action" value="add">')
+    
+    print('<div class="mb-3"><label class="form-label">Select Sailor</label>')
+    print('<select name="sailor" class="form-select" size="10">')
+    
     cursor.execute("SELECT email, firstname, surname FROM sailor ORDER BY firstname")
-    
-    print(f'<form action="authorise.cgi" method="get">') # Using GET to keep state easily in URL or POST? 
-    # If GET, all params need to be hidden inputs.
-    print(f'<input type="hidden" name="start_date" value="{start_date}">')
-    print(f'<input type="hidden" name="end_date" value="{end_date}">')
-    print(f'<input type="hidden" name="country" value="{country}">')
-    print(f'<input type="hidden" name="cni" value="{cni}">')
-    print(f'<input type="hidden" name="action" value="add">')
-    
-    print('Sailor: <select name="sailor">')
     for s_row in cursor.fetchall():
-        print(f'<option value="{s_row[0]}">{s_row[1]} {s_row[2]} ({s_row[0]})</option>')
-    print('</select>')
-    print('<input type="submit" value="Authorise">')
+        print('<option value="{}">{} {} ({})</option>'.format(s_row[0], s_row[1], s_row[2], s_row[0]))
+    
+    print('</select></div>')
+    print('<button type="submit" class="btn btn-success w-100">Grant Authorization</button>')
     print('</form>')
+    
+    print('</div></div></div></div>') # End card, col, row
 
     cursor.close()
     connection.close()
 
 except Exception as e:
-    print(f'<p>Error: {e}</p>')
+    print('<div class="alert alert-danger">Error: {}</div>'.format(e))
 
-print('</body></html>')
+templates.print_footer()
