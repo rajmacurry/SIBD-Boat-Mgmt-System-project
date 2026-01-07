@@ -59,13 +59,13 @@ print("""
                 <div class="form-text">Only Senior sailors can be responsible for a reservation.</div>
             </div>
 """)
-
+print("""
             <div class="col-12 mt-4">
                 <label class="form-label">Authorise New Sailor</label>
                 <div class="form-text mb-2">Grant access to this reservation. Hold Ctrl/Cmd to select multiple.</div>
                 <select name="authorized_sailors" multiple class="form-select" size="10">
                     <option value="" disabled>Select Sailors...</option>
-"""
+""")
 try:
     conn = psycopg2.connect(login.credentials)
     cur = conn.cursor()
