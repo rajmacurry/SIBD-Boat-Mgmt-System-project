@@ -78,27 +78,34 @@ FOR EACH ROW EXECUTE PROCEDURE disjoint_senior_check();
 
 
 CREATE OR REPLACE FUNCTION check_trip_overlap()
-RETURNS TRIGGER AS
-$$
-    BEGIN
-    IF EXISTS (
-    SELECT * FROM TRIP WHERE reservation_start_date=New.reservation_start_date AND
-    reservation_end_date=NEW.reservation_end_date AND boat_country=NEW.boat_country AND cni=NEW.CNI
-    -- check if the new trip takes off before an ongoing trip arrives
-    AND NEW.takeoff<arrival
-    --check if the new trip arrives after the an existing trip was meant to take off
-    AND NEW.arrival>takeoff
-    --If we are updating a trip, we dont want the system to think that the trip is overlapping with itself.
-    AND NOT (takeoff=OLD.takeoff AND reservation_start_date=OLD.reservation_start_date
-    AND reservation_end_date=OLD.reservation_end_date
-    AND boat_country= OLD.boat_country and cni=OLD.cni))
-    THEN
-    RAISE EXCEPTION 'Trip dates overlap with an existing trip for this reservation'; --return which trips overlap
-    END IF;
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM trip t
+    WHERE t.reservation_start_date = NEW.reservation_start_date
+      AND t.reservation_end_date   = NEW.reservation_end_date
+      AND t.boat_country           = NEW.boat_country
+      AND t.cni                    = NEW.cni
+      -- overlap test
+      AND NEW.takeoff < t.arrival
+      AND NEW.arrival > t.takeoff
+      -- only exclude "self" when updating
+      AND (
+        TG_OP <> 'UPDATE'
+        OR (t.takeoff, t.reservation_start_date, t.reservation_end_date, t.boat_country, t.cni)
+           IS DISTINCT FROM
+           (OLD.takeoff, OLD.reservation_start_date, OLD.reservation_end_date, OLD.boat_country, OLD.cni)
+      )
+  ) THEN
+    RAISE EXCEPTION 'Trip dates overlap with an existing trip for this reservation';
+  END IF;
 
-    RETURN NEW;
-    END;
-    $$ LANGUAGE plpgsql;
+  RETURN NEW;
+END;
+$$;
 
 CREATE TRIGGER tg_check_trip_overlap
 BEFORE INSERT OR UPDATE ON trip
