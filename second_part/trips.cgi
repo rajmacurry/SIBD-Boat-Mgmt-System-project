@@ -105,15 +105,17 @@ try:
     
     print('<div class="table-responsive">')
     print('<table class="table table-striped table-hover align-middle">')
-    print('<thead class="table-dark"><tr><th>Takeoff</th><th>Arrival</th><th>Boat</th><th>Reservation</th><th>Skipper</th></tr></thead><tbody>')
+    print('<thead class="table-dark"><tr><th>Takeoff</th><th>Arrival</th><th>Boat</th><th>Reservation</th><th>Skipper</th><th>Actions</th></tr></thead><tbody>')
     
     for row in cursor.fetchall():
+        params = "takeoff={}&res_start={}&res_end={}&country={}&cni={}".format(row[0], row[5], row[6], row[2], row[3])
         print('<tr>')
         print('<td>{}</td>'.format(row[0]))
         print('<td>{}</td>'.format(row[1]))
         print('<td><strong>{}</strong> <small class="text-muted">({})</small></td>'.format(row[2], row[3]))
         print('<td><small>{} to {}</small></td>'.format(row[5], row[6]))
         print('<td><code>{}</code></td>'.format(row[4]))
+        print('<td><a href="remove_trip.cgi?{}" onclick="return confirm(\'Delete this trip log?\');" class="btn btn-sm btn-outline-danger">Delete</a></td>'.format(params))
         print('</tr>')
     print('</tbody></table></div>')
     
