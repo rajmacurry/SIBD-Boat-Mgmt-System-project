@@ -56,27 +56,6 @@ where s.email in (select t.skipper
 
 
 -- list the sailors with the longest duration of trips(sum of trip durations) for the same single reservations; display also the sum of trips duration
-SELECT
-    t.reservation_start_date AS start_date,
-    t.reservation_end_date   AS end_date,
-    t.boat_country           AS boat_country,
-    t.cni,
-    SUM(t.arrival - t.takeoff) AS total_days
-FROM trip t
-GROUP BY
-    t.reservation_start_date,
-    t.reservation_end_date,
-    t.boat_country,
-    t.cni
-HAVING SUM(t.arrival - t.takeoff) >= ALL (
-    SELECT SUM(t2.arrival - t2.takeoff)
-    FROM trip t2
-    GROUP BY
-        t2.reservation_start_date,
-        t2.reservation_end_date,
-        t2.boat_country,
-        t2.cni
-);
 
 
 select s.*, a.start_date, a.end_date, a.boat_country, a.cni, total_days

@@ -1,0 +1,56 @@
+--Which country has more boats registered than any other?
+
++--------+-----+
+|country |count|
++--------+-----+
+|Portugal|4    |
++--------+-----+
+
+
+--List all the sailors that have at least two certificates.
+
++---------+--------+
+|firstname|surname |
++---------+--------+
+|Raj      |Maharjan|
+|Ahmad    |Ashraf  |
+|Ana      |Santos  |
++---------+--------+
+
+
+--Who are the sailors that have sailed to every location in 'Portugal'?
+
++---------+--------+
+|firstname|surname |
++---------+--------+
+|Ana      |Santos  |
+|Juan     |Viteri  |
+|Raj      |Maharjan|
++---------+--------+
+
+
+
+-- List the sailors with the most skipped trips
+
++---------+--------+
+|firstname|surname |
++---------+--------+
+|Raj      |Maharjan|
+|Ahmad    |Ashraf  |
+|Laura    |Bianchi |
+|Ramesh   |Khan    |
++---------+--------+
+
+
+-- list the sailors with the longest duration of trips(sum of trip durations) 
+-- for the same single reservations; display also the sum of trips duration
+
++---------+--------+--------------+----------+----------+------------+-----+----------+
+|firstname|surname |email         |start_date|end_date  |boat_country|cni  |total_days|
++---------+--------+--------------+----------+----------+------------+-----+----------+
+|Ana      |Santos  |ana@mail.com  |2025-01-05|2025-01-20|Portugal    |PT101|7         |
+|Joao     |Silva   |joao@mail.com |2025-01-05|2025-01-20|Portugal    |PT101|7         |
+|Maria    |Costa   |maria@mail.com|2025-01-05|2025-01-20|Portugal    |PT101|7         |
+|Ahmad    |Ashraf  |ahmad@mail.com|2025-03-01|2025-03-20|Germany     |DE400|7         |
+|Raj      |Maharjan|raj@mail.com  |2025-03-01|2025-03-20|Germany     |DE400|7         |
++---------+--------+--------------+----------+----------+------------+-----+----------+
